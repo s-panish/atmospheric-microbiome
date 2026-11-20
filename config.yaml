@@ -1,0 +1,70 @@
+project:
+  samples: metadata/samples.tsv
+  events: metadata/extreme_events.tsv    
+  timezone: Europe/Moscow                 
+  threads: 4
+  seed: 139
+  permutations: 999
+  outdir: results
+  force: false                            
+  decontam_threshold: 0.5
+  min_samples_per_group: 2
+  lag_windows_hours: [24, 72]             
+  ecology:
+    constrained_ordination: rda           
+    min_taxon_prevalence: 0.1
+    min_corr_samples: 8
+    continuous_predictors: [temp_c, rh_pct, wind_ms, precip_mm, pressure_hpa, pm25, pm10]
+    confounders: [season, extraction_batch, library_batch]
+amplicon:
+  run_qc: true
+  min_reads: 100
+  max_ee: [2, 2]
+  min_len: 50
+  min_boot: 80
+  pooling: pseudo
+  detect_orientation: true
+  drop_taxa: []                         
+  markers:
+    "16S":
+      raw_dir: ../test_16S_ITS_data
+      pattern_fwd: _1_16S.fastq.gz
+      pattern_rev: _2_16S.fastq.gz
+      reference: refdb/silva_v144/silva_nr99_v144_toGenus_trainset.fa.gz
+      species_reference: refdb/silva_v144/silva_v144_assignSpecies.fa.gz
+      tax_levels: [Domain, Kingdom, Phylum, Class, Order, Family, Genus]
+      primer_fwd: CCTACGGGNGGCWGCAG
+      primer_rev: GACTACHVGGGTATCTAATCC
+      trunc_len: [240, 200]            
+      try_rc: false
+    ITS:
+      raw_dir: ../test_16S_ITS_data
+      pattern_fwd: _1_ITS.fastq.gz
+      pattern_rev: _2_ITS.fastq.gz
+      reference: refdb/unite_v10.0/sh_general_release_dynamic_s_all_19.02.2025.fasta
+      tax_levels: [Kingdom, Phylum, Class, Order, Family, Genus, Species]
+      primer_fwd: TAGAGGAAGTAAAAGTCGTAA
+      primer_rev: TTYRCTRCGTTCTTCATC
+      trunc_len: [0, 0]                 
+      try_rc: true
+shotgun:
+  raw_dir: ../test_shotgun_data
+  pattern_fwd: _R1_001.fastq
+  pattern_rev: _R2_001.fastq
+  run_qc: true
+  run_upstream: true
+  remove_host: true                     
+  host_index: refdb/host/host
+  kraken_db: refdb/kraken2/k2_pluspf_20261022
+  bracken_readlen: 150
+  bracken_level: S                      
+  bracken_dir: results/shotgun/bracken
+commands:
+  fastqc: fastqc
+  multiqc: multiqc
+  cutadapt: cutadapt
+  fastp: fastp
+  bowtie2: bowtie2
+  samtools: samtools
+  kraken2: /home/panishevasa/tools/kraken2/kraken2
+  bracken: /home/panishevasa/tools/Bracken/bracken

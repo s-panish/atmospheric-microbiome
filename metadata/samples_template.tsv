@@ -1,0 +1,3 @@
+sample_id	marker	is_control	site_id	site_type	datetime_start	datetime_end	extraction_batch	library_batch	season	temp_c	rh_pct	wind_ms	precip_mm	pressure_hpa	pm25	pm10	air_volume_m3
+EXAMPLE_001	16S	FALSE	SITE_A	urban	2027-02-14T09:00:00	2027-02-14T17:00:00	EXT_A	LIB_A	NA	8.4	72	3.2	0	1018	14.2	22.8	28.8
+EXAMPLE_BLANK	16S	TRUE	SITE_A	blank	NA	NA	EXT_A	LIB_A	NA	NA	NA	NA	NA	NA	NA	NA	NA

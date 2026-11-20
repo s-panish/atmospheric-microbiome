@@ -1,0 +1,26 @@
+name: airlab-weather
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - r-base>=4.3
+  - r-rmarkdown
+  - r-knitr
+  - r-yaml
+  - r-ggplot2
+  - r-vegan
+  - r-dplyr
+  - bioconductor-dada2
+  - bioconductor-phyloseq
+  - bioconductor-decontam
+  - bioconductor-shortread
+  - bioconductor-biostrings
+  - fastqc
+  - multiqc
+  - cutadapt
+  - fastp
+  - bowtie2
+  - samtools
+  - kraken2
+  - bracken
+  - pandoc

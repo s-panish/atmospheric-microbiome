@@ -1,0 +1,2 @@
+event_id	site_id	event_type	start	end	criterion	source
+EXAMPLE_STORM	SITE_A	storm	2027-02-12T12:00:00	2027-02-13T18:00:00	wind_ms >= 15	Example only - replace with verified meteorological observations

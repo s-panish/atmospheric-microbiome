@@ -1,0 +1,32 @@
+# Raw sequencing data
+/raw/
+/refdb/
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
+
+# Large archives
+/results.zip
+
+# Intermediate processing files
+/results/*/trimmed/
+/results/*/filtered/
+/results/*/denoised_pairs.rds
+
+# Intermediate quality control files
+/results/*/fastqc/
+/results/*/multiqc/multiqc_data/
+/results/*/logs/
+
+# Temporary files
+.ipynb_checkpoints/
+.Rhistory
+.Rproj.user/
+*_cache/
+/logs/
+--job-name=air16s
+
+# Local or unpublished metadata
+/metadata/samples.tsv
+/metadata/extreme_events.tsv

@@ -1,0 +1,9 @@
+Permutation test for adonis under reduced model
+Permutation: free
+Number of permutations: 999
+
+vegan::adonis2(formula = bray ~ site_type, data = perm_data, permutations = 999)
+         Df SumOfSqs      R2      F Pr(>F)
+Model     1  0.01572 0.03618 0.7133  0.522
+Residual 19  0.41871 0.96382              
+Total    20  0.43443 1.00000              
