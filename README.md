@@ -1,113 +1,138 @@
-# AirLab: таксономия атмосферного микробиома и экстремальные погодные явления
+# Atmospheric Microbiome: 16S, ITS and Shotgun
 
-**Упрощённый учебно-исследовательский проект на основе `airlab-pipeline-main.zip` и приложенной схемы «Биоинформатические пайплайны атмосферного микробиома».**
+**Amplicon-sequencing workflows, analysis results and a developing shotgun workflow for the atmospheric microbiome.**
 
-В проекте **ровно два вычислительных R Markdown-отчёта**:
+This repository documents the re-analysis of bacterial 16S rRNA and fungal ITS sequencing data from **Rodó et al. (2024), PNAS**, and provides a starting point for future research on microbial community composition, atmospheric transport and extreme weather. The **16S and ITS notebooks have been executed** on the study data; the **shotgun workflow is a draft and has not yet been validated on a complete dataset**.
 
-| Файл | Данные | Биологические результаты |
-|---|---|---|
-| `amplicon_16S_ITS.Rmd` | 16S **или** ITS (запускаются отдельно параметром `marker`) | ASV, DADA2, таксономия SILVA/UNITE, phyloseq, разнообразие, погодные факторы |
-| `shotgun.Rmd` | Парные shotgun FASTQ или заранее рассчитанные Bracken `.bracken` | fastp, строгий dehosting, Kraken2/Bracken, профили таксонов, разнообразие, погодные факторы |
+## 1. Analysis status and key results
 
-**Нет MAG, сборки контигов, биннинга, RGI/CARD, ARG и резистома.** Не требуется Snakemake, Nextflow или nf-core: оркестрация в Rmd и скрипте `run.sh`. Подготовка микробных данных использует внешние консольные приложения, которые Rmd вызывает автоматически, а все последующие расчёты происходят в R.
+| | 16S rRNA (bacteria) | ITS (fungi) |
+|---|---:|---:|
+| Processed samples | **21** (10 Flight, 11 Ground) | **20** (10 Flight, 10 Ground) |
+| Raw paired-end read pairs | 2,091,511 | 3,707,744 |
+| Non-chimeric merged reads | 1,155,686 | 1,932,395 |
+| Target-group reads after taxonomic filtering | **1,154,733** | **1,645,078** |
+| ASVs before taxonomic filtering | 2,507 | 1,105 |
+| Target-group ASVs | **2,469 bacterial ASVs** | **885 fungal ASVs** |
+| Bray–Curtis PERMANOVA, Flight vs Ground | R² = 0.0362; p = 0.522 | R² = 0.0430; p = 0.602 |
+| Status | Executed | Executed |
 
-## 1. Что добавить самостоятельно
+**Interpretation:** The current ASV-level analyses did not detect a statistically significant Flight–Ground community-composition difference. This does *not* establish equivalence between the groups. The PERMANOVA values shown above use 999 permutations and the individual amplicon-marker datasets.
 
-1. Парные FASTQ (`raw/16S/`, `raw/ITS/`, `raw/shotgun/`). Файлы должны называться `<sample_id>_1.fastq.gz` и `<sample_id>_2.fastq.gz`, если суффиксы не изменены в `config.yaml`.
-2. Обучающие таксономические базы DADA2 — **SILVA** для 16S и **UNITE** для ITS (`amplicon.markers.*.reference`). Для SILVA 138 ожидаются шесть рангов, для SILVA 144 часто семь; **обязательно** укажите правильные `tax_levels`. Базы сюда не включены.
-3. Kraken2-база + Bracken kmer distribution нужной длины (`shotgun.kraken_db`, `shotgun.bracken_readlen`). Для удаления host-ДНК нужен Bowtie2-индекс (`shotgun.host_index`, только префикс). Базы сюда не включены.
-4. Реальные строки образцов: скопировать `metadata/samples_template.tsv` в `metadata/samples.tsv` и заменить **примерные** значения. **Нельзя** автоматически проставлять `is_control=FALSE` всем образцам: бланки должны быть отмечены явно. `sample_id` обязан совпадать с префиксом FASTQ или `.bracken`.
-5. При наличии экстремальных событий скопировать `metadata/extreme_events_template.tsv` в `metadata/extreme_events.tsv`, заменить тестовый пример **реальными верифицированными событиями**, заполнить источник и правило определения. Если событий нет, файл можно не создавать: статистика по непрерывным погодным полям работает независимо.
-6. Проверить часовой пояс в `project.timezone`, суффиксы FASTQ, праймеры, параметры DADA2 и условия эксперимента.
+The processed sample sets are not identical: the available FASTQ data yielded 21 bacterial samples and 20 fungal samples. The manuscript describes 22 collected aerosol samples; not all have usable FASTQ data for both markers in the dataset analyzed here.
 
-**Метаданные**: минимум `sample_id`, `is_control`. Для погодной части добавьте `site_id`, `datetime_start`, `datetime_end`, температуру (`temp_c`), влажность (`rh_pct`), ветер (`wind_ms`), осадки (`precip_mm`), давление (`pressure_hpa`), PM2.5 (`pm25`), PM10 (`pm10`), сезоны и партии экстракции (`extraction_batch`), если известны. Бланкам достаточно `is_control=TRUE`, они **не входят** в экологическую статистику. Старые метаданные без погоды годятся для обработки последовательностей, но не для оценки погодных ассоциаций.
+### Taxonomic filtering
 
-В исходном проекте встречаются данные SILVA 144 с дополнительным таксономическим уровнем: перед реальным запуском проверьте совместимость версии базы и `tax_levels`.
+- **16S:** DADA2 inferred 2,507 non-chimeric ASVs. Organellar ASVs (chloroplast/mitochondria) and ASVs without a confidently assigned bacterial domain were removed from the primary bacterial analysis, leaving **2,469 ASVs**. Complete and filtered tables are retained separately.
+- **ITS:** UNITE assigned **885 ASVs to `k__Fungi`**. The remaining 220 ASVs (12 assigned to `k__Viridiplantae` and 208 without a kingdom assignment) are excluded from the *fungal-only* analysis but remain in the unfiltered output. Unassigned does not necessarily mean non-fungal.
 
-## 2. Установка
+Relative abundances describe sequencing reads, **not** absolute airborne microbial concentrations.
 
-Linux/macOS (для `shotgun.remove_host=true` также требуется `bash` и `samtools`):
+## 2. Repository contents
 
-```bash
-mamba env create -f env/environment.yml
-conda activate airlab-weather
-# если окружение уже создано: mamba env update -f env/environment.yml --prune
+```text
+.
+├── AirLab_16S_FROM_RAW.ipynb      # Executed 16S FASTQ -> DADA2 -> ecology
+├── AirLab_ITS_FROM_RAW.ipynb      # Executed ITS FASTQ -> DADA2 -> ecology
+├── shotgun.Rmd                   # Draft shotgun taxonomic/ecological workflow
+├── config.yaml                   # Configuration for the earlier Rmd-based setup
+├── run.sh                        # Earlier Rmd launcher; see warning below
+├── env/environment.yml          # Conda environment specification
+├── metadata/
+│   ├── samples_pnas.tsv          # Sample-level metadata from study supplements
+│   ├── metadata_schema.md
+│   └── *_template.tsv
+└── results/
+    ├── 16S/                     # Exported bacterial results
+    └── ITS/                     # Exported fungal results
 ```
 
-Если инструменты стоят в разных окружениях, задайте **полные пути к бинарным файлам** в секции `commands` файла `config.yaml`. R-пакеты можно устанавливать отдельно, но необходимы версии, совместимые друг с другом.
+### Key outputs in each `results/<marker>/` directory
 
-**Для Windows:** рекомендуемый вариант — WSL2 (Ubuntu) или Linux-сервер; BioConda и цепочка Bowtie2/Samtools в этом проекте рассчитаны на POSIX-среду. В обычной Windows-командной строке `run.sh` не работает. При запуске через WSL2 исходные данные можно читать из `/mnt/c/...`, но большие FASTQ практичнее держать в файловой системе Linux.
+| File | Content |
+|---|---|
+| `read_tracking.tsv` | Per-sample reads at each filtering/denoising/merging stage |
+| `asv_counts_all.tsv` / `asv_counts_target.tsv` | ASV counts before / after target-group filtering |
+| `taxonomy_all_asvs.tsv` / `taxonomy_target.tsv` | Taxonomic assignments before / after filtering |
+| `taxonomy_filter_audit.tsv` | Audit of excluded ASVs |
+| `asv_sequences_all.fasta` | ASV nucleotide sequences |
+| `metadata_target.tsv` | Sample metadata used for the ecological analysis |
+| `phyloseq.rds` | R object containing target-group counts, taxonomy and metadata |
+| `alpha_diversity.tsv` | Sample-level alpha-diversity metrics |
+| `relative_genus.tsv` | Genus-level relative abundance table |
+| `bray_curtis.tsv`, `jaccard.tsv`, `pcoa_bray.tsv` | Community distances and ordination coordinates |
+| `permanova_flight_ground.txt`, `betadisper_flight_ground.txt` | Flight–Ground statistical tests |
+| `*.png` | Rarefaction, alpha-diversity, genus profiles and PCoA plots |
+| `sessionInfo.txt`, `tool_versions.txt` | Recorded R session and external-tool versions |
 
-## 3. Запуск одной командой
+For ITS, `phyloseq_all_ITS_asvs.rds` additionally retains the **unfiltered** ITS community.
 
-Из корня папки проекта:
+### Example outputs
 
-```bash
-./run.sh 16S
-./run.sh ITS
-./run.sh shotgun
-# все три последовательных прогона, если подготовлены все данные:
-./run.sh all
-```
+| 16S bacterial genus profiles | ITS fungal genus profiles |
+|---|---|
+| ![16S genus profiles](results/16S/genus_profiles.png) | ![ITS genus profiles](results/ITS/genus_profiles.png) |
 
-`16S` и `ITS` используют **один** файл `amplicon_16S_ITS.Rmd`; это раздельные рендеры и отдельные каталоги `results/16S/`, `results/ITS/`. `shotgun` использует `shotgun.Rmd` и пишет `results/shotgun/`.
+Genus-level plots should be interpreted with care: not all reads and ASVs can be classified reliably to genus, especially for ITS.
 
-Для повторного рендера без пересчёта готовых тяжёлых этапов включено кэширование. Для принудительного пересчёта установить `project.force: true`. Для обработки уже готовых Bracken `.bracken` установить `shotgun.run_upstream: false` и положить результаты в папку `shotgun.bracken_dir`.
+## 3. Amplicon workflows (executed)
 
-Можно запускать через RStudio → Knit, но нужно передавать нужный `params.marker` и работать из корня проекта. Надёжнее `run.sh`.
+The current, **tested** entry points are the two Jupyter notebooks:
 
-## 4. Отбор событий и лаги
+- [`AirLab_16S_FROM_RAW.ipynb`](AirLab_16S_FROM_RAW.ipynb): bacterial 16S rRNA; **SILVA v144** taxonomy.
+- [`AirLab_ITS_FROM_RAW.ipynb`](AirLab_ITS_FROM_RAW.ipynb): fungal ITS; **UNITE v10.0** taxonomy.
 
-Файл `metadata/extreme_events.tsv`:
+Processing sequence:
 
-`event_id | site_id | event_type | start | end | criterion | source`
+**Paired FASTQ → FastQC / MultiQC → Cutadapt primer trimming → DADA2 quality filtering, error learning, denoising, paired-read merging and chimera removal → ASVs → SILVA/UNITE taxonomic classification → target-group filtering → phyloseq → alpha/beta diversity and exploratory statistics.**
 
-* Для каждого биологического образца интервал отбора `[datetime_start, datetime_end)` сравнивается с интервалом события `[start, end)` **в одном часовом поясе**.
-* При пересечении — `event_group=during`. Если пробоотбор начался через 0–24 часа после конца события — `post_0_24h`; через 24–72 часа — `post_24_72h`; прочие корректно датированные пробы — `background`.
-* При нескольких событиях приоритет: `during` > первый лаг > второй лаг. Все совпавшие события внутри выбранного приоритета сохраняются в `matched_events`, виды событий — в `event_type`.
-* Если файл событий указан, но время отбора отсутствует, назначается **`unassigned`**, а не «фон»; такие образцы не тестируются в PERMANOVA для событий.
-* Значение `site_id=ALL` допускается для событий, относящихся ко всем площадкам. Для сравнения «до события» можно отдельно добавить явное окно до события в следующей версии; текущий `background` не гарантирует, что проба удалена от других событий вне таблицы.
+The notebooks also report read retention, export intermediate audit tables and calculate Bray–Curtis / Jaccard distances, PCoA and Flight–Ground PERMANOVA / dispersion tests. They use `minBoot = 80` for taxonomic assignment and `pooling = "pseudo"` in DADA2; consult the setup cells for the full run-specific settings. The 16S notebook also uses DADA2 species matching against a SILVA species reference.
 
-**Важно:** в Rmd нет автоматического выбора процентилей по микробиомным пробам. Внешние критерии экстремальных температур, ветра и осадков должны определяться отдельно по длинным метеорологическим рядам, официальным порогам или протоколу исследования. Ряды **не** включены в архив, поэтому события не могут быть рассчитаны достоверно внутри этого набора файлов. Это научное ограничение, а не ошибка исполнения.
+### Running the notebooks on another machine
 
-## 5. Выходные данные
+1. Obtain paired FASTQ files from **ENA accession [PRJEB64345](https://www.ebi.ac.uk/ena/browser/view/PRJEB64345)**. Expected names in the current notebooks are `S1_1_16S.fastq.gz` / `S1_2_16S.fastq.gz` and the analogous `_ITS.fastq.gz` files.
+2. Install the required R and command-line tools. [`env/environment.yml`](env/environment.yml) is a starting specification; the executed cluster environment and package versions are recorded in the results directories.
+3. Download the appropriate **SILVA v144** and **UNITE v10.0** classification reference files separately. They are not stored in this repository.
+4. Open the appropriate `.ipynb` file in **JupyterLab using an R kernel**. In its initial setup cell, update **`project_dir`, `raw_dir`, `env_bin`, `taxonomy_ref`** and (for 16S) **`species_ref`** for the local machine.
+5. Run cells from top to bottom. The existing notebooks are tailored to an **HPC/SLURM** environment and explicitly disallow compute-intensive execution on the `sms` login node; use an allocated compute node for full processing.
+6. Review `results/<marker>/read_tracking.tsv`, the taxonomic audit, the quality/rarefaction plots and the exported statistics.
 
-В каждом каталоге результатов:
+**Important:** The two executed Jupyter notebooks currently have paths configured **inside their own cells**; they **do not** automatically take their analysis settings from `config.yaml`. Some input metadata is embedded in the notebooks for the study reproduction. This repository is an executed research workflow, not yet a fully portable one-command package.
 
-- `report.html` — интерактивный HTML-отчёт с кодом, графиками и протоколом.
-- `phyloseq_raw.rds`, `phyloseq_clean.rds`, `counts_clean.tsv`, `taxonomy_clean.tsv` — таблицы для последующей работы.
-- `metadata_with_events.tsv` — привязка погоды, временных окон, событий и лагов к образцам.
-- `alpha_diversity.tsv`, `relative_phylum.tsv`, `relative_genus.tsv`, `relative_species.tsv` (при наличии соответствующих рангов).
-- `bray_curtis.tsv`, `jaccard.tsv`, `pcoa.tsv`, `nmds.tsv`, `pcoa.png` (при достаточном числе образцов).
-- `permanova.tsv`, `betadisper.tsv`, `weather_ordination_tests.tsv`, `shannon_weather_regression.tsv`, `taxa_weather_correlations_exploratory.tsv` **только когда анализ допустим**.
-- `analysis_status.tsv` — что реально выполнено/пропущено и почему.
-- `run_manifest.txt` — параметры R, версии пакетов, конфиг и важные условия обработки.
+### Legacy launcher warning
 
-Дополнительно для 16S/ITS: `asv_counts.tsv`, `asv_taxonomy.tsv`, `asv_sequences.fasta`, `read_tracking.tsv`, `orientation.tsv`, логи Cutadapt и DADA2 state/cache.
+`run.sh` is from an **earlier R Markdown design** and still references `amplicon_16S_ITS.Rmd`, which is **not included in this repository**. Consequently, **`./run.sh 16S`, `./run.sh ITS` and `./run.sh all` do not run the published Jupyter workflows**. Use the `.ipynb` notebooks until the launcher and configuration are refactored. Do not treat `run.sh` as a validated amplicon entry point.
 
-Дополнительно для shotgun: JSON/HTML fastp, логи Bowtie2, `kraken2/*.kreport`, `bracken/*.bracken`, `bracken/*.bracken.kreport`, таблица `bracken_species_counts.tsv`.
+## 4. Shotgun workflow (development)
 
-## 6. Аналитическая логика по схеме диплома
+[`shotgun.Rmd`](shotgun.Rmd) outlines **FastQC / fastp → host-read removal with Bowtie2 + samtools → Kraken2 → Bracken → taxonomic profiles and ecological statistics**. It is intended for future shotgun analysis but **has not yet completed the same end-to-end validation as 16S and ITS**. Host-reference files, Kraken2/Bracken databases, input FASTQ and sample metadata must be configured before use.
 
-**Стадии из стр. 2 PDF («Таксономия, разнообразие и метеоусловия»)**:
-FastQC/MultiQC → Cutadapt → DADA2 (filter/learnErrors/derep/dada/merge/chimera) → ASV → SILVA/UNITE → phyloseq/decontam → Observed, Shannon, Simpson, Pielou → Bray–Curtis/Jaccard, PCoA/NMDS → PERMANOVA/betadisper, CCA/RDA, регрессия, событийные окна и лаги.
+The currently committed shotgun workflow does **not** perform metagenome assembly, MAG reconstruction, antimicrobial resistance-gene profiling or resistome analysis. These are separate potential extensions and should not be inferred from the existing outputs.
 
-**Стадии из стр. 3 PDF («Таксономический и экологический анализ»)**:
-FastQC → fastp → Bowtie2/Samtools (если нужен dehosting) → Kraken2/Bracken (таксономические профили без сборки) → phyloseq/vegan/ggplot2 → метеогруппы/лаги → PCoA/NMDS, PERMANOVA, CCA/RDA, регрессии.
+The `config.yaml` values for shotgun and the previous Rmd pipeline are examples/cluster-specific settings, **not proof of a successful shotgun run**. In particular, the configuration references `metadata/samples.tsv` (not committed) and contains settings that need adapting to the data and environment.
 
-Здесь **Kraken2+Bracken** — основной способ shotgun-профилирования. В схеме ещё приведены **nf-core/taxprofiler, MetaPhlAn и Taxpasta** как альтернативы или средства интеграции, но они сознательно **не включены**: это самостоятельные оркестраторы/альтернативные профилеры, добавление которых противоречило бы цели получить два простых Rmd, запускаемых без отдельных workflow-фреймворков. Аналогично необязательный HUMAnN не включён, так как это функциональное профилирование и другая научная задача.
+## 5. Comparison with Rodó et al. (2024)
 
-## 7. Научные ограничения и контроль качества
+The re-analysis supports several **qualitative patterns** reported in the publication, including prominent *Sphingomonas* in the bacterial profiles and no detected Flight–Ground community-composition difference in the current tests. However, the original publication and this repository use **different processing/classification methods**, including reference database versions, filtering choices and taxonomic resolution.
 
-- **Деконтаминация** методом `decontam::isContaminant(method="prevalence")` выполняется, только если есть ≥2 контроля и ≥2 настоящих образца; иначе результаты выводятся с предупреждением. Бланки всегда исключаются из экологической статистики.
-- **Относительная численность** ASV и Bracken — не абсолютная концентрация в воздухе (клеток/м³). Нельзя непосредственно сравнивать 16S, ITS и shotgun по этим значениям как по одной шкале. 16S/ITS имеют ампликонные смещения, shotgun зависит от базы и покрытия.
-- **PERMANOVA** выполняется лишь при ≥6 пробах и минимум двух пробах в каждой группе; для групп событий при сильном смешении сезона/партии тест пропускается. `betadisper` проверяет неоднородность дисперсий между группами.
-- **CCA или RDA**, а не оба автоматически: выбирается в конфиге `constrained_ordination`. RDA применяет Hellinger-трансформацию относительных представленностей; CCA — исходную таблицу оценочных численностей. При недостатке метеометаданных анализ пропускается.
-- Корреляции таксонов с погодой — **поисковые**: расчёт Spearman и поправка BH, ограничение на представленность и количество проверяемых родов. Это не доказательство причинной связи и не полноценная модель композиционных данных.
-- Регрессии требуют достаточного количества наблюдений и не гарантируют отсутствия пространственной/временной автокорреляции. Для диплома потребуется проверить сбалансированность по площадкам и сезонам и при необходимости добавить блокированную перестановку или смешанные модели.
-- В `samtools view -f 12` остаются только пары с двумя немаппированными на host чтениями; проверяйте, что Bowtie2-референс и версия индекса соответствуют цели. Шаг можно пропустить только осознанно (`remove_host=false`, с предупреждением).
-- В `Bracken` `new_est_reads` — оценочные численности на ранге вида; прочтения, которые не разрешаются до вида, не включены в species-таблицу. Предпочтительно сравнивать доли при одинаковой настройке базы и ранга.
+**Do not compare ASV counts directly to the article's number of genera.** Likewise, Shannon diversity calculated on ASVs is not numerically interchangeable with Shannon calculated from genus-aggregated counts. Original article findings involving February–April differences require a directly matched genus-level analysis for exact replication of the published tests.
 
-## 8. Что проверено в этой сборке
+The article reports **305 bacterial and 266 fungal genera** across its analysis; these are published **genus counts**, not ASV counts. The genus-level and species-level identification coverage should be evaluated against the author's exact classifier settings before numerical agreement is claimed.
 
-Проверены наличие **ровно двух Rmd**, структура YAML, взаимосвязи входных/выходных путей, корректность парности Markdown/R-чанков и shell-синтаксис `run.sh`. **Полный биоинформатический прогон не выполнялся**: в загруженном архиве отсутствуют исходные FASTQ и референсные базы, а в среде подготовки нет `Rscript` и пакетов DADA2/Kraken2/Bracken. Перед использованием для диплома обязателен тест на 1–2 парных образцах + бланках, проверка `run_manifest.txt` и ручной QC таблиц.
+## 6. Metadata, extreme weather and quality limitations
+
+- [`metadata/samples_pnas.tsv`](metadata/samples_pnas.tsv) contains sample identifiers, Flight/Ground labels and sampling timestamps in **Asia/Tokyo**; dates for overnight Ground samples can differ from the preceding flight campaign date. A separate `campaign_date` field is needed when reproducing campaign-grouped figures.
+- The current PNAS metadata **do not contain measured values** for the temperature, relative humidity, wind, rainfall, pressure and particulate columns needed for weather association tests. **No association with extreme weather has been established by these outputs.** The event TSV in this repository is a template, not a verified event dataset.
+- Negative controls were **not available/verified in the uploaded amplicon runs**; `decontam` was **not applied** to these results. This matters for low-biomass atmospheric samples.
+- Alpha-diversity richness at ASV level is sensitive to sequencing depth. Check sampling depth, rarefaction curves, study design and potential batch effects before comparing groups.
+- PERMANOVA p-values are exploratory and do not prove equality or causality. Weather-dependent analyses will require real meteorological observations, careful time alignment and appropriate control for sampling date/batch.
+- Raw FASTQ data, large reference databases, filtered FASTQ, temporary DADA2 objects and cluster logs are deliberately excluded from Git to keep the repository manageable. Obtain raw reads from ENA.
+
+## 7. Citation and sources
+
+**Primary publication:** Rodó, X., Pozdniakova, S., Borràs, S., et al. (2024). *Microbial richness and air chemistry in aerosols above the PBL confirm 2,000-km long-distance transport of potential human pathogens*. **Proceedings of the National Academy of Sciences**, 121(38), e2404191121. https://doi.org/10.1073/pnas.2404191121
+
+- Original analysis and outputs: https://github.com/AirLabBcn/microbial-richness-troposphere
+- Sequencing data: https://www.ebi.ac.uk/ena/browser/view/PRJEB64345
+
+This repository contains a **separate re-analysis and work in progress**; it should not be described as an exact reproduction of all published numerical results. A software license has not yet been selected for this repository.
