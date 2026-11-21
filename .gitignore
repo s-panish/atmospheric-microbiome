@@ -30,3 +30,8 @@
 # Local or unpublished metadata
 /metadata/samples.tsv
 /metadata/extreme_events.tsv
+
+# Local configuration and unfinished scripts
+/config.yaml
+/run.sh
+/shotgun.Rmd
