@@ -1,0 +1,30 @@
+ITS integrated processing (RDP90 + UNITE BLASTN)
+Date: 2026-11-21 18:20:57.185804
+Reference: /home/panishevasa/airlab/pipeline/refdb/unite_v10.0/sh_general_release_dynamic_s_all_19.02.2025.fasta
+Reference MD5: a9e89137e3df7984fa4090b88711d2f1
+Samples: 20
+Nonchimeric ITS ASVs: 1105
+Fungal ASVs RDP90: 820
+Fungal reads: 1620250
+Confirmed species ASVs (all ASVs): 0
+Provisional BLAST-only genus ASVs: 0
+Genus conflicts: 0
+RDP minBoot: 90
+BLAST identity threshold: 99
+BLAST coverage threshold: 95
+BLAST E-value threshold: 1e-20
+BLAST max hits: 500
+BLAST near-best bitscore window: 1
+SLURM node: cn-023
+Threads: 2
+R version: R version 4.5.3 (2026-03-11)
+DADA2 version: 1.38.0
+phyloseq version: 1.54.2
+vegan version: 2.7.5
+blastn version: blastn: 2.9.0+  Package: blast 2.9.0, build Mar 11 2019 18:36:56
+makeblastdb version: makeblastdb: 2.9.0+  Package: blast 2.9.0, build Mar 11 2019 18:36:56
+cutadapt version: 5.2
+Important: BLAST uses same UNITE reference as RDP; no independent reference validation.
+Important: species requires RDP90 and BLASTN species name agreement.
+Important: genus BLAST-only rescue is marked provisional, not confirmed.
+Important: no decontam without verified negative controls; no meteorology inferred.

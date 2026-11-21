@@ -1,3 +1,0 @@
-cutadapt = 5.2
-fastqc = FastQC v0.13.0
-multiqc = multiqc, version 1.35

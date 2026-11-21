@@ -1,8 +1,0 @@
-
-/// MultiQC 🔍 v1.35
-
-       file_search | Search path: /home/panishevasa/airlab/pipeline/results/ITS/fastqc
-            fastqc | Found 40 reports
-     write_results | Data        : results/ITS/multiqc/multiqc_data
-     write_results | Report      : results/ITS/multiqc/multiqc_report.html
-           multiqc | MultiQC complete
